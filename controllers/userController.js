@@ -1,0 +1,256 @@
+const User = require("../models/User");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+// ===============================
+// @desc Get User Profile
+// @route GET /api/users/profile
+// ===============================
+const getProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .select("-password")
+      .populate("enrolledCourses");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json(user);
+  } catch (error) {
+    res.status(500).json({
+      message: "Server Error",
+      error: error.message,
+    });
+  }
+};
+
+// ===============================
+// @desc Register User
+// @route POST /api/users/register
+// ===============================
+const registerUser = async (req, res) => {
+  try {
+    const { name, email, password, role } = req.body;
+
+    const userExists = await User.findOne({ email });
+
+    if (userExists) {
+      return res.status(400).json({
+        message: "User already exists",
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      enrolledCourses: [],
+      courseProgress: [],
+    });
+
+    res.status(201).json({
+      message: "Registration successful",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// @desc Login User
+// @route POST /api/users/login
+// ===============================
+const loginUser = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({
+        message: "Invalid email or password",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// @desc Get All Users
+// @route GET /api/users
+// ===============================
+const getUsers = async (req, res) => {
+  try {
+    const users = await User.find().select("-password");
+
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// @desc Get My Enrolled Courses
+// @route GET /api/users/mycourses
+// ===============================
+const getMyCourses = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate("enrolledCourses")
+      .select("enrolledCourses");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json(user.enrolledCourses);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// @desc Get My Course Progress
+// @route GET /api/users/progress
+// ===============================
+const getMyProgress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate("courseProgress.course")
+      .select("courseProgress");
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    res.status(200).json(user.courseProgress);
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to fetch progress",
+      error: error.message,
+    });
+  }
+};
+
+// ===============================
+// @desc Update Course Progress
+// @route PUT /api/users/progress/:courseId
+// ===============================
+const updateProgress = async (req, res) => {
+  try {
+    const { courseId } = req.params;
+    const { progress } = req.body;
+
+    // Validate progress
+    if (progress === undefined) {
+      return res.status(400).json({
+        message: "Progress is required",
+      });
+    }
+
+    if (progress < 0 || progress > 100) {
+      return res.status(400).json({
+        message: "Progress must be between 0 and 100",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Find course progress
+    const courseProgress = user.courseProgress.find(
+      (item) => item.course.toString() === courseId
+    );
+
+    if (!courseProgress) {
+      return res.status(404).json({
+        message: "Course progress not found",
+      });
+    }
+
+    // Update progress
+    courseProgress.progress = Number(progress);
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Progress updated successfully",
+      progress: courseProgress.progress,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Failed to update progress",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = {
+  registerUser,
+  loginUser,
+  getUsers,
+  getProfile,
+  getMyCourses,
+  getMyProgress,
+  updateProgress,
+};
