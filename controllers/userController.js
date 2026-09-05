@@ -33,7 +33,15 @@ const getProfile = async (req, res) => {
 // ===============================
 const registerUser = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    // Role is intentionally NOT taken from req.body
+    // Every new registered user will be a student
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({
+        message: "Name, email and password are required",
+      });
+    }
 
     const userExists = await User.findOne({ email });
 
@@ -49,7 +57,7 @@ const registerUser = async (req, res) => {
       name,
       email,
       password: hashedPassword,
-      role,
+      role: "student",
       enrolledCourses: [],
       courseProgress: [],
     });
@@ -94,6 +102,17 @@ const loginUser = async (req, res) => {
       });
     }
 
+    // Fixed admin email
+    if (
+      process.env.ADMIN_EMAIL &&
+      email.toLowerCase() === process.env.ADMIN_EMAIL.toLowerCase()
+    ) {
+      if (user.role !== "admin") {
+        user.role = "admin";
+        await user.save();
+      }
+    }
+
     const token = jwt.sign(
       {
         id: user._id,
@@ -128,9 +147,53 @@ const loginUser = async (req, res) => {
 // ===============================
 const getUsers = async (req, res) => {
   try {
-    const users = await User.find().select("-password");
+    const users = await User.find()
+      .select("-password")
+      .sort({ createdAt: -1 });
 
     res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+// ===============================
+// @desc Make User Admin
+// @route PUT /api/users/:id/make-admin
+// ===============================
+const makeUserAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    if (user.role === "admin") {
+      return res.status(400).json({
+        message: "User is already an admin",
+      });
+    }
+
+    user.role = "admin";
+
+    await user.save();
+
+    res.status(200).json({
+      message: "User has been promoted to admin successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
   } catch (error) {
     res.status(500).json({
       message: error.message,
@@ -249,6 +312,7 @@ module.exports = {
   registerUser,
   loginUser,
   getUsers,
+  makeUserAdmin,
   getProfile,
   getMyCourses,
   getMyProgress,

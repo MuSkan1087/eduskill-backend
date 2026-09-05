@@ -5,6 +5,7 @@ const router = express.Router();
 const {
   registerUser,
   getUsers,
+  makeUserAdmin,
   loginUser,
   getProfile,
   getMyCourses,
@@ -56,5 +57,14 @@ router.get(
   authorizeRoles("admin"),
   getUsers
 );
+
+// Make User Admin
+router.put(
+  "/:id/make-admin",
+  protect,
+  authorizeRoles("admin"),
+  makeUserAdmin
+);
+
 
 module.exports = router;
