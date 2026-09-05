@@ -202,6 +202,114 @@ const makeUserAdmin = async (req, res) => {
 };
 
 // ===============================
+// @desc Remove Admin Role
+// @route PUT /api/users/:id/remove-admin
+// ===============================
+const removeUserAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Prevent admin from removing their own admin role
+    if (req.user.id === id) {
+      return res.status(400).json({
+        message: "You cannot remove your own admin role",
+      });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Protect fixed admin account
+    if (
+      process.env.ADMIN_EMAIL &&
+      user.email.toLowerCase() ===
+        process.env.ADMIN_EMAIL.trim().toLowerCase()
+    ) {
+      return res.status(400).json({
+        message: "The main admin account cannot be demoted",
+      });
+    }
+
+    if (user.role !== "admin") {
+      return res.status(400).json({
+        message: "User is not an admin",
+      });
+    }
+
+    user.role = "student";
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Admin role removed successfully",
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+// ===============================
+// @desc Delete User
+// @route DELETE /api/users/:id
+// ===============================
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Prevent admin from deleting themselves
+    if (req.user.id === id) {
+      return res.status(400).json({
+        message: "You cannot delete your own account",
+      });
+    }
+
+    const user = await User.findById(id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Protect fixed admin account
+    if (
+      process.env.ADMIN_EMAIL &&
+      user.email.toLowerCase() ===
+        process.env.ADMIN_EMAIL.trim().toLowerCase()
+    ) {
+      return res.status(400).json({
+        message: "The main admin account cannot be deleted",
+      });
+    }
+
+    await User.findByIdAndDelete(id);
+
+    res.status(200).json({
+      message: "User deleted successfully",
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
+
+// ===============================
 // @desc Get My Enrolled Courses
 // @route GET /api/users/mycourses
 // ===============================
@@ -313,6 +421,8 @@ module.exports = {
   loginUser,
   getUsers,
   makeUserAdmin,
+  removeUserAdmin,
+  deleteUser,
   getProfile,
   getMyCourses,
   getMyProgress,

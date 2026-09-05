@@ -6,6 +6,8 @@ const {
   registerUser,
   getUsers,
   makeUserAdmin,
+  removeUserAdmin,
+  deleteUser,
   loginUser,
   getProfile,
   getMyCourses,
@@ -22,35 +24,23 @@ const {
 // Public Routes
 // ==========================
 
-// Register
 router.post("/register", registerUser);
-
-// Login
 router.post("/login", loginUser);
-
 
 // ==========================
 // Protected Routes
 // ==========================
 
-// User Profile
 router.get("/profile", protect, getProfile);
-
-// My Enrolled Courses
 router.get("/mycourses", protect, getMyCourses);
-
-// My Course Progress
 router.get("/progress", protect, getMyProgress);
-
-// Update Course Progress
 router.put("/progress/:courseId", protect, updateProgress);
-
 
 // ==========================
 // Admin Only
 // ==========================
 
-// Get All Users
+// Get all users
 router.get(
   "/",
   protect,
@@ -58,7 +48,7 @@ router.get(
   getUsers
 );
 
-// Make User Admin
+// Make user admin
 router.put(
   "/:id/make-admin",
   protect,
@@ -66,5 +56,20 @@ router.put(
   makeUserAdmin
 );
 
+// Remove admin role
+router.put(
+  "/:id/remove-admin",
+  protect,
+  authorizeRoles("admin"),
+  removeUserAdmin
+);
+
+// Delete user
+router.delete(
+  "/:id",
+  protect,
+  authorizeRoles("admin"),
+  deleteUser
+);
 
 module.exports = router;
