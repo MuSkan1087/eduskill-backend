@@ -37,7 +37,6 @@ https://github.com/MuSkan1087/eduskill-backend
 - Protected API Routes
 - Bearer Token Authentication
 - Role-Based Authorization
-- Logout support through frontend token management
 
 ### 📚 Course Management
 
@@ -78,9 +77,9 @@ https://github.com/MuSkan1087/eduskill-backend
 
 - Node.js
 - Express.js
+- JavaScript
 - MongoDB
 - Mongoose
-- JavaScript
 - JWT
 - bcryptjs
 - CORS
@@ -109,15 +108,15 @@ https://github.com/MuSkan1087/eduskill-backend
                                ▼
                     ┌──────────────────────┐
                     │   Express.js API     │
-                    │      Server          │
+                    │       Server         │
                     └──────────┬───────────┘
                                │
               ┌────────────────┼────────────────┐
               │                │                │
               ▼                ▼                ▼
-        ┌──────────┐     ┌────────────┐   ┌───────────┐
-        │  Routes  │     │Middleware  │   │Controllers│
-        └────┬─────┘     └────────────┘   └─────┬─────┘
+        ┌──────────┐     ┌────────────┐   ┌────────────┐
+        │  Routes  │     │ Middleware │   │ Controllers│
+        └────┬─────┘     └────────────┘   └─────┬──────┘
              │                                   │
              └─────────────────┬─────────────────┘
                                ▼
@@ -129,99 +128,3 @@ https://github.com/MuSkan1087/eduskill-backend
                        ┌───────────────┐
                        │ MongoDB Atlas │
                        └───────────────┘
-
-🔐 Authentication Flow
-
-User
-  │
-  ▼
-Register / Login
-  │
-  ▼
-Express API
-  │
-  ▼
-User Verification
-  │
-  ▼
-Password Validation
-  │
-  ▼
-JWT Token Generated
-  │
-  ▼
-Frontend Stores Token
-  │
-  ▼
-Axios Authorization Header
-  │
-  ▼
-Protected Backend Routes
-
-.
-
-👥 User Roles
-
-The backend supports role-based access control.
-
-| Role    | Access                           |
-| ------- | -------------------------------- |
-| Student | Browse, enroll and track courses |
-| Admin   | Add, update and delete courses   |
-| Mentor  | Supported user role              |
-
-
-📡 API Endpoints
-
-🔐 User APIs
-
-| Method | Endpoint                        | Description                |
-| ------ | ------------------------------- | -------------------------- |
-| POST   | `/api/users/register`           | Register a new user        |
-| POST   | `/api/users/login`              | Login user                 |
-| GET    | `/api/users/profile`            | Get logged-in user profile |
-| GET    | `/api/users/mycourses`          | Get enrolled courses       |
-| GET    | `/api/users/progress`           | Get learning progress      |
-| PUT    | `/api/users/progress/:courseId` | Update course progress     |
-
-📚 Course APIs
-
-| Method | Endpoint                  | Description        |
-| ------ | ------------------------- | ------------------ |
-| GET    | `/api/courses`            | Get all courses    |
-| GET    | `/api/courses/:id`        | Get course details |
-| POST   | `/api/courses`            | Add a new course   |
-| PUT    | `/api/courses/:id`        | Update a course    |
-| DELETE | `/api/courses/:id`        | Delete a course    |
-| POST   | `/api/courses/:id/enroll` | Enroll in a course |
-
-
-🗂️ Project Structure
-
-eduskill-backend/
-│
-├── config/
-│   └── db.js
-│
-├── controllers/
-│   ├── courseController.js
-│   └── userController.js
-│
-├── middleware/
-│   └── protect.js
-│
-├── models/
-│   ├── Course.js
-│   └── User.js
-│
-├── routes/
-│   ├── courseRoutes.js
-│   └── userRoutes.js
-│
-├── utils/
-│
-├── server.js
-├── package.json
-├── package-lock.json
-├── .gitignore
-└── .env.example
