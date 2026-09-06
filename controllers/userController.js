@@ -415,6 +415,9 @@ const updateProgress = async (req, res) => {
     });
   }
 };
+
+
+{/*getAdminState*/ }
 const getAdminStats = async (req, res) => {
   try {
     const totalUsers = await User.countDocuments();
@@ -471,6 +474,56 @@ const getAdminStats = async (req, res) => {
   }
 };
 
+// ===============================
+// Course Enrollment Analytics
+// ===============================
+
+const getCourseEnrollmentStats = async (req, res) => {
+  try {
+    const data = await User.aggregate([
+      {
+        $unwind: {
+          path: "$enrolledCourses",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $group: {
+          _id: "$enrolledCourses",
+          enrollments: {
+            $sum: 1,
+          },
+        },
+      },
+      {
+        $sort: {
+          enrollments: -1,
+        },
+      },
+    ]);
+
+    const Course = require("../models/Course");
+
+    const courseStats = await Promise.all(
+      data.map(async (item) => {
+        const course = await Course.findById(item._id).select("title");
+
+        return {
+          courseId: item._id,
+          title: course ? course.title : "Unknown Course",
+          enrollments: item.enrollments,
+        };
+      })
+    );
+
+    res.status(200).json(courseStats);
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
+
 module.exports = {
   registerUser,
   loginUser,
@@ -483,4 +536,5 @@ module.exports = {
   getMyProgress,
   updateProgress,
   getAdminStats,
+  getCourseEnrollmentStats,
 };

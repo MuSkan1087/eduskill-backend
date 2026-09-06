@@ -14,6 +14,7 @@ const {
   getMyProgress,
   updateProgress,
   getAdminStats,
+  getCourseEnrollmentStats,
 } = require("../controllers/userController");
 
 const {
@@ -55,6 +56,13 @@ router.get(
   protect,
   authorizeRoles("admin"),
   getAdminStats
+);
+
+router.get(
+  "/course-enrollment-stats",
+  protect,
+  authorizeRoles("admin"),
+  getCourseEnrollmentStats
 );
 
 // Make user admin
