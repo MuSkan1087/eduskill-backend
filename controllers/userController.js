@@ -228,7 +228,7 @@ const removeUserAdmin = async (req, res) => {
     if (
       process.env.ADMIN_EMAIL &&
       user.email.toLowerCase() ===
-        process.env.ADMIN_EMAIL.trim().toLowerCase()
+      process.env.ADMIN_EMAIL.trim().toLowerCase()
     ) {
       return res.status(400).json({
         message: "The main admin account cannot be demoted",
@@ -289,7 +289,7 @@ const deleteUser = async (req, res) => {
     if (
       process.env.ADMIN_EMAIL &&
       user.email.toLowerCase() ===
-        process.env.ADMIN_EMAIL.trim().toLowerCase()
+      process.env.ADMIN_EMAIL.trim().toLowerCase()
     ) {
       return res.status(400).json({
         message: "The main admin account cannot be deleted",
@@ -415,6 +415,61 @@ const updateProgress = async (req, res) => {
     });
   }
 };
+const getAdminStats = async (req, res) => {
+  try {
+    const totalUsers = await User.countDocuments();
+
+    const totalStudents = await User.countDocuments({
+      role: "student",
+    });
+
+    const totalAdmins = await User.countDocuments({
+      role: "admin",
+    });
+
+    const totalMentors = await User.countDocuments({
+      role: "mentor",
+    });
+
+    // Total enrollments across all students
+    const enrollmentData = await User.aggregate([
+      {
+        $project: {
+          enrolledCount: {
+            $size: {
+              $ifNull: ["$enrolledCourses", []],
+            },
+          },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalEnrollments: {
+            $sum: "$enrolledCount",
+          },
+        },
+      },
+    ]);
+
+    const totalEnrollments =
+      enrollmentData.length > 0
+        ? enrollmentData[0].totalEnrollments
+        : 0;
+
+    res.status(200).json({
+      totalUsers,
+      totalStudents,
+      totalAdmins,
+      totalMentors,
+      totalEnrollments,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 
 module.exports = {
   registerUser,
@@ -427,4 +482,5 @@ module.exports = {
   getMyCourses,
   getMyProgress,
   updateProgress,
+  getAdminStats,
 };

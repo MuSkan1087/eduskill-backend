@@ -13,6 +13,7 @@ const {
   getMyCourses,
   getMyProgress,
   updateProgress,
+  getAdminStats,
 } = require("../controllers/userController");
 
 const {
@@ -46,6 +47,14 @@ router.get(
   protect,
   authorizeRoles("admin"),
   getUsers
+);
+
+// Admin Statistics
+router.get(
+  "/admin-stats",
+  protect,
+  authorizeRoles("admin"),
+  getAdminStats
 );
 
 // Make user admin
