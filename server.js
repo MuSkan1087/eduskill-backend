@@ -31,10 +31,12 @@ app.use(express.urlencoded({ extended: true }));
 //Routes
 const courseRoutes = require("./routes/courseRoutes");
 const userRoutes = require("./routes/userRoutes");
+const questionRoutes = require("./routes/questionRoutes");
 
 
 app.use("/api/users", userRoutes);
 app.use("/api/courses", courseRoutes);
+app.use("/api/questions", questionRoutes);
 
 // Health Check Route
 app.get("/", (req, res) => {
