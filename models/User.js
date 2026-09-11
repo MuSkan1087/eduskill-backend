@@ -35,6 +35,32 @@ const userSchema = new mongoose.Schema(
       },
     ],
 
+    lessonProgress: [
+      {
+        courseId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Course",
+        },
+
+        moduleId: {
+          type: Number,
+        },
+
+        lessonId: {
+          type: Number,
+        },
+
+        completed: {
+          type: Boolean,
+          default: false,
+        },
+
+        completedAt: {
+          type: Date,
+        },
+      },
+    ],
+
     // Progress of enrolled courses
     courseProgress: [
       {
@@ -49,6 +75,22 @@ const userSchema = new mongoose.Schema(
           min: 0,
           max: 100,
         },
+
+        completedLessons: [
+          {
+            moduleId: {
+              type: Number,
+            },
+
+            lessonId: {
+              type: Number,
+            },
+
+            completedAt: {
+              type: Date,
+            },
+          },
+        ],
       },
     ],
   },

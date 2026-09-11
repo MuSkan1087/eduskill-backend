@@ -15,6 +15,7 @@ const {
   updateProgress,
   getAdminStats,
   getCourseEnrollmentStats,
+  completeLesson,
 } = require("../controllers/userController");
 
 const {
@@ -37,6 +38,11 @@ router.get("/profile", protect, getProfile);
 router.get("/mycourses", protect, getMyCourses);
 router.get("/progress", protect, getMyProgress);
 router.put("/progress/:courseId", protect, updateProgress);
+router.put(
+  "/progress/:courseId/module/:moduleId/lesson/:lessonId",
+  protect,
+  completeLesson
+);
 
 // ==========================
 // Admin Only
@@ -89,4 +95,9 @@ router.delete(
   deleteUser
 );
 
+router.put(
+  "/progress/:courseId/module/:moduleId/lesson/:lessonId",
+  protect,
+  completeLesson
+);
 module.exports = router;

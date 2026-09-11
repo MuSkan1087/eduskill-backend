@@ -2,6 +2,7 @@ const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
+
 // ===============================
 // @desc Get User Profile
 // @route GET /api/users/profile
@@ -523,6 +524,77 @@ const getCourseEnrollmentStats = async (req, res) => {
     });
   }
 };
+// Mark a lesson as completed
+const completeLesson = async (req, res) => {
+  try {
+    const { courseId, moduleId, lessonId } = req.params;
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+    // Find user's progress for this course
+    let courseProgress = user.courseProgress.find(
+      (item) => item.course.toString() === courseId
+    );
+
+    // If course progress does not exist, create it
+    if (!courseProgress) {
+      user.courseProgress.push({
+        course: courseId,
+        progress: 0,
+        completedLessons: [],
+      });
+
+      courseProgress =
+        user.courseProgress[user.courseProgress.length - 1];
+    }
+
+    // Check whether lesson is already completed
+    const alreadyCompleted =
+      courseProgress.completedLessons.some(
+        (lesson) =>
+          lesson.moduleId === Number(moduleId) &&
+          lesson.lessonId === Number(lessonId)
+      );
+
+    if (!alreadyCompleted) {
+      courseProgress.completedLessons.push({
+        moduleId: Number(moduleId),
+        lessonId: Number(lessonId),
+        completedAt: new Date(),
+      });
+    }
+
+    // Calculate overall course progress
+    // Current course has 10 modules × average 6 lessons ≈ 60 lessons
+    const totalLessons = 60;
+
+    const completedLessons =
+      courseProgress.completedLessons.length;
+
+    courseProgress.progress = Math.min(
+      Math.round((completedLessons / totalLessons) * 100),
+      100
+    );
+
+    await user.save();
+
+    res.status(200).json({
+      message: "Lesson completed successfully",
+      progress: courseProgress.progress,
+      completedLessons: courseProgress.completedLessons.length,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: error.message,
+    });
+  }
+};
 
 module.exports = {
   registerUser,
@@ -537,4 +609,5 @@ module.exports = {
   updateProgress,
   getAdminStats,
   getCourseEnrollmentStats,
+  completeLesson,
 };
